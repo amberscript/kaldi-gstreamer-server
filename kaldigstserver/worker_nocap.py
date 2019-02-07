@@ -1,5 +1,5 @@
 __author__ = 'tanel'
-import caps as mycaps 
+
 import logging
 import logging.config
 import time
@@ -213,7 +213,7 @@ class ServerWebsocket(WebSocketClient):
                 logger.debug(u"%s: Before postprocessing: %s" % (self.request_id, repr(full_result).decode("unicode-escape")))
                 full_result = yield self.post_process_full(full_result)
                 logger.info("%s: Postprocessing done." % self.request_id)
-                logger.debug(u"%s: After postprocessing**: %s" % (self.request_id, repr(full_result).decode("unicode-escape")))
+                logger.debug(u"%s: After postprocessing: %s" % (self.request_id, repr(full_result).decode("unicode-escape")))
 
                 try:
                     self.send(json.dumps(full_result))
@@ -317,9 +317,9 @@ class ServerWebsocket(WebSocketClient):
                     logging.debug("%s: Starting postprocessing: %s"  % (self.request_id, text))
                     text = yield self.post_processor.stdout.read_until('\n')#.decode("utf-8")
                     text = text.decode("utf-8")
-                    logging.debug("%s: Postprocessing returned **** : %s"  % (self.request_id, text))
+                    logging.debug("%s: Postprocessing returned: %s"  % (self.request_id, text))
                     text = text.strip()
-                    text = text.replace("\\n", "\n"); 
+                    text = text.replace("\\n", "\n")
                     result.append(text)
                 self.post_processor_lock.release()
                 raise tornado.gen.Return(result)
@@ -332,7 +332,7 @@ class ServerWebsocket(WebSocketClient):
     @tornado.gen.coroutine
     def post_process_full(self, full_result):
         if self.full_post_processor:
-            self.full_post_processor.stdin.write("%s\n\n" % json.dumps(full_result)); 
+            self.full_post_processor.stdin.write("%s\n\n" % json.dumps(full_result))
             self.full_post_processor.stdin.flush()
             lines = []
             while True:
@@ -342,22 +342,12 @@ class ServerWebsocket(WebSocketClient):
                     break
                 lines.append(l)
             full_result = json.loads("".join(lines))
-            
-
-            hyps=full_result.get("result", {}).get("hypotheses", [])
-            for hyp in hyps:
-                for wordali in hyp["word-alignment"]:
-                    wordali["word"]=mycaps.capitalize(wordali["word"]); #logging.debug(wordali["word"])
- 
-            logging.debug("*** process transcriptxx"); #logging.debug(hyp["word-alignment"])
-            #for wd in full_result.get("result", {}).get("hypotheses", []).get("word-alignment",[]):
-            #    wd["word"]=mycaps.capitalize(wd["word"]); logging.debug(wd["word"])
 
         elif self.post_processor:
             transcripts = []
             for hyp in full_result.get("result", {}).get("hypotheses", []):
                 transcripts.append(hyp["transcript"])
-            processed_transcripts = yield self.post_process(transcripts, blocking=True); logging.debug("*** process transcript")
+            processed_transcripts = yield self.post_process(transcripts, blocking=True)
             for (i, hyp) in enumerate(full_result.get("result", {}).get("hypotheses", [])):
                 hyp["original-transcript"] = hyp["transcript"]
                 hyp["transcript"] = processed_transcripts[i]
